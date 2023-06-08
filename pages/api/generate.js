@@ -1,10 +1,16 @@
 import { Configuration, OpenAIApi } from "openai";
+import js_beautify from "js-beautify";
+
+// import {code} from '../../assets/code';
+import fs from 'fs';
+import path from "path";
 
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
 });
 const openai = new OpenAIApi(configuration);
 
+const pathToCode = '/Users/blinov.ivan/Desktop/work/ticket-projects/chatgpt-react/openai-quickstart-node/assets/';
 export default async function (req, res) {
   if (!configuration.apiKey) {
     res.status(500).json({
@@ -15,23 +21,17 @@ export default async function (req, res) {
     return;
   }
 
-  const animal = req.body.animal || '';
-  if (animal.trim().length === 0) {
-    res.status(400).json({
-      error: {
-        message: "Please enter a valid animal",
-      }
-    });
-    return;
-  }
+  
+  fs.writeFileSync(path.join(pathToCode, 'code2.js'), data);
+  res.status(200).json({result: {content: js_beautify(data, { indent_size: 2, space_in_empty_paren: true })}});
 
   try {
-    const completion = await openai.createCompletion({
-      model: "text-davinci-003",
-      prompt: generatePrompt(animal),
-      temperature: 0.6,
+    const completion = await openai.createChatCompletion({
+      model: "gpt-3.5-turbo",
+      messages: generatePrompt(),
+      temperature: 1,
     });
-    res.status(200).json({ result: completion.data.choices[0].text });
+    res.status(200).json({ result: completion.data.choices[0].message });
   } catch(error) {
     // Consider adjusting the error handling logic for your use case
     if (error.response) {
@@ -48,15 +48,10 @@ export default async function (req, res) {
   }
 }
 
-function generatePrompt(animal) {
-  const capitalizedAnimal =
-    animal[0].toUpperCase() + animal.slice(1).toLowerCase();
-  return `Suggest three names for an animal that is a superhero.
-
-Animal: Cat
-Names: Captain Sharpclaw, Agent Fluffball, The Incredible Feline
-Animal: Dog
-Names: Ruff the Protector, Wonder Canine, Sir Barks-a-Lot
-Animal: ${capitalizedAnimal}
-Names:`;
+function generatePrompt(fileName = 'code.js') {
+  const data = fs.readFileSync(path.join(pathToCode, fileName), {encoding: 'utf-8'});
+  return [{ 
+    role: "user", 
+    content: `convert the following code from class components to functional: ${data}`
+  }];
 }
