@@ -1,32 +1,34 @@
 import Head from "next/head";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import styles from "./index.module.css";
+import {reactFilePaths} from "../utils/allPaths";
 
 export default function Home() {
-  const [result, setResult] = useState();
+  const [result, setResult] = useState([]);
 
-  async function onSubmit() {
-    try {
-      const response = await fetch("/api/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: undefined,
-      });
-      console.log('request sent');
-      const data = await response.json();
-      if (response.status !== 200) {
-        throw data.error || new Error(`Request failed with status ${response.status}`);
+  const onSubmit = useCallback(async () => {
+    reactFilePaths.forEach(async (reactFilePath) => {
+      try {
+        const response = await fetch("/api/generate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ filePath: reactFilePath }),
+        });
+        console.log('request sent');
+        const data = await response.json();
+        if (response.status !== 200) {
+          throw data.error || new Error(`Request failed with status ${response.status}`);
+        }
+        console.log('get response', data);
+        setResult(result => [...result, data.result]);
+      } catch(error) {
+        console.error(error);
+        alert(error.message);
       }
-      console.log('get response', data);
-      setResult(data.result.content);
-    } catch(error) {
-      // Consider implementing your own error handling logic here
-      console.error(error);
-      alert(error.message);
-    }
-  }
+    });
+  }, [result]);
 
   return (
     <div>
@@ -37,7 +39,9 @@ export default function Home() {
 
       <main className={styles.main}>
         <button onClick={onSubmit}>Generate</button>
-        <div className={styles.result}>{`${result}`}</div>
+        <div>{result.length}</div>
+        <div className={styles.result}>{result.map((message, index) => <div key={index}>{message}</div>)}</div>
+
       </main>
     </div>
   );

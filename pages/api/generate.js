@@ -1,16 +1,22 @@
 import { Configuration, OpenAIApi } from "openai";
-import js_beautify from "js-beautify";
 
 import fs from 'fs';
 import path from "path";
+const demosPath = '/Users/blinov.ivan/Desktop/work/devextreme-demos/JSDemos/Demos';
 
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
 });
 const openai = new OpenAIApi(configuration);
 
-const pathToCode = '/Users/blinov.ivan/Desktop/work/ticket-projects/chatgpt-react/openai-quickstart-node/assets/';
-const demosPath = '/Users/blinov.ivan/Desktop/work/devextreme-demos/JSDemos/Demos'
+
+function generatePrompt(filePath) {
+const fileContents = fs.readFileSync(filePath, {encoding: 'utf-8'});
+return [{ 
+  role: "user", 
+  content: `convert the following code from class components to functional: ${fileContents}`
+}];
+}
 
 export default async function (req, res) {
   if (!configuration.apiKey) {
@@ -21,46 +27,27 @@ export default async function (req, res) {
     });
     return;
   }
-  const fs = require('fs');
-  const path = require('path');
 
-  function findReactFolders(directory) {
-    const folders = fs.readdirSync(directory);
-  
-    const reactFolders = [];
-  
-    folders.forEach((folder) => {
-      const folderPath = path.join(directory, folder);
-      const stats = fs.statSync(folderPath);
-      
-      if (stats.isDirectory()) {
-        if (/react/i.test(folder)) {
-          reactFolders.push(folderPath);
-        }
-  
-        const nestedReactFolders = findReactFolders(folderPath);
-        reactFolders.push(...nestedReactFolders);
+  const filePath = req.body.filePath;
+
+  if (!filePath){
+    res.status(500).json({
+      error: {
+        message: "Your filePath is not set",
       }
     });
-  
-    return reactFolders;
   }
 
-  // Example usage
-  const reactFolders = findReactFolders(demosPath);
-  console.log(reactFolders);
-
   try {
-    // const prompt = generatePrompt()
-    // const completion = await openai.createChatCompletion({
-    //   model: "gpt-3.5-turbo",
-    //   messages: prompt,
-    //   temperature: 1,
-    // });
-    // const chatgptAnswer = completion.data.choices[0].message;
-    // fs.writeFileSync(path.join(pathToCode, 'code2.js'), chatgptAnswer.content);
-    // res.status(200).json({ result: chatgptAnswer });
-    res.status(200).json({ result: {content: reactFolders}});
+    const prompt = generatePrompt(req.body.filePath)
+    const completion = await openai.createChatCompletion({
+      model: "gpt-3.5-turbo",
+      messages: prompt,
+      temperature: 0.5,
+    });
+    const chatgptAnswer = completion.data.choices[0].message;
+    fs.writeFileSync(filePath, chatgptAnswer.content);
+    res.status(200).json({ result: `File ${path.relative(demosPath, filePath)} has been handled!` });
   } catch(error) {
     // Consider adjusting the error handling logic for your use case
     if (error.response) {
@@ -75,12 +62,5 @@ export default async function (req, res) {
       });
     }
   }
-}
 
-export function generatePrompt(fileName = 'code.js') {
-  const data = fs.readFileSync(path.join(pathToCode, fileName), {encoding: 'utf-8'});
-  return [{ 
-    role: "user", 
-    content: `convert the following code from class components to functional: ${data}`
-  }];
 }
