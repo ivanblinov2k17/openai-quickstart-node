@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const demosPath = '/Users/blinov.ivan/Desktop/work/devextreme-demos/JSDemos/Demos';
+const demosPath = '/Users/blinov.ivan/Desktop/work/devextreme-demos/JSDemos/Demos/DataGrid';
 const pathToOutput = '/Users/blinov.ivan/Desktop/work/ticket-projects/chatgpt-react/openai-quickstart-node/utils';
 
 function findReactFolders(directory) {

@@ -5,6 +5,7 @@ import {reactFilePaths} from "../utils/allPaths";
 
 export default function Home() {
   const [result, setResult] = useState([]);
+  const [generationStarted, setGenerationStarted] = useState(false);
 
   const onSubmit = useCallback(async () => {
     reactFilePaths.forEach(async (reactFilePath) => {
@@ -39,6 +40,8 @@ export default function Home() {
 
       <main className={styles.main}>
         <button onClick={onSubmit}>Generate</button>
+        <div>{generationStarted ? 'Generation has started' : ''}</div>
+        <div>{result.length === reactFilePaths.length ? 'Generation finished' : ''}</div>
         <div>{result.length}</div>
         <div className={styles.result}>{result.map((message, index) => <div key={index}>{message}</div>)}</div>
 

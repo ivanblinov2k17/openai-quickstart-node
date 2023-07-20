@@ -9,7 +9,7 @@ const configuration = new Configuration({
 });
 const openai = new OpenAIApi(configuration);
 
-
+const bestPromptForCallbacks = `wrap all callbacks, that are located at the top scope inside App component, in usecallback  in the following code, if there are not any callbacks return the code itself with no changes. Do not add any extra callbacks:`;
 function generatePrompt(filePath) {
 const fileContents = fs.readFileSync(filePath, {encoding: 'utf-8'});
 return [{ 
